@@ -308,7 +308,7 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
   offset = addPointField(ros_msg, "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, offset);
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
-  // Velodyne layout (what FAST-LIO, patchwork++ etc. expect): float32 "time" in
+  // Layout FAST-LIO (lidar_type 2) and patchwork++ expect: float32 "time" in
   // seconds since the header stamp, which is the first point with ts_first_point.
   // +2 keeps "time" 4-byte aligned after the uint16 ring.
   offset = addPointField(ros_msg, "ring", 1, sensor_msgs::msg::PointField::UINT16, offset);
