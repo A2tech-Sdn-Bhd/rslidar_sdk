@@ -22,7 +22,7 @@ lidar:
       max_distance: 60            #  Maximum distance of point cloud
       use_lidar_clock: false       #  true--Use the lidar clock as the message timestamp
                                    #  false-- Use the system clock as the timestamp
-      dense_points: false          #  true: discard NAN points; false: reserve NAN points
+      dense_points: true           #  true: discard NAN points; false: reserve NAN points
       
       ts_first_point: true         #  true: time-stamp point cloud with the first point; false: with the last point;   
                                    #  these parameters are used from mechanical lidar
@@ -37,9 +37,9 @@ lidar:
       pcap_path: /home/robosense/lidar.pcap # The path of pcap file
 
     ros:
-      ros_frame_id: rslidar                            # Frame id of packet message and point cloud message
+      ros_frame_id: velodyne                           # Frame id of packet message and point cloud message
       ros_recv_packet_topic: /rslidar_packets          # Topic used to receive lidar packets from ROS
       ros_send_packet_topic: /rslidar_packets          # Topic used to send lidar packets through ROS
       ros_send_imu_data_topic: /rslidar_imu_data       # Topic used to send imu data through ROS
-      ros_send_point_cloud_topic: /rslidar_points      # Topic used to send point cloud through ROS
+      ros_send_point_cloud_topic: /rslidar_points     # Topic used to send point cloud through ROS
       ros_queue_length: 100                            # Topic QoS history depth

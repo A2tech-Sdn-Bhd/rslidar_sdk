@@ -289,7 +289,8 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
   ros_msg.fields.clear();
   ros_msg.fields.reserve(fields);
 
-  if (send_by_rows)
+  // Dense clouds are 1 x N (driver sets height 1); swapping would publish N x 1.
+  if (send_by_rows || rs_msg.is_dense)
   {
     ros_msg.width = rs_msg.width; 
     ros_msg.height = rs_msg.height; 
@@ -307,8 +308,11 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
   offset = addPointField(ros_msg, "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, offset);
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
+  // Velodyne layout (what FAST-LIO, patchwork++ etc. expect): float32 "time" in
+  // seconds since the header stamp, which is the first point with ts_first_point.
+  // +2 keeps "time" 4-byte aligned after the uint16 ring.
   offset = addPointField(ros_msg, "ring", 1, sensor_msgs::msg::PointField::UINT16, offset);
-  offset = addPointField(ros_msg, "timestamp", 1, sensor_msgs::msg::PointField::FLOAT64, offset);
+  offset = addPointField(ros_msg, "time", 1, sensor_msgs::msg::PointField::FLOAT32, offset + 2);
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -330,7 +334,7 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
   sensor_msgs::PointCloud2Iterator<float> iter_intensity_(ros_msg, "intensity");
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
   sensor_msgs::PointCloud2Iterator<uint16_t> iter_ring_(ros_msg, "ring");
-  sensor_msgs::PointCloud2Iterator<double> iter_timestamp_(ros_msg, "timestamp");
+  sensor_msgs::PointCloud2Iterator<float> iter_time_(ros_msg, "time");
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -357,10 +361,10 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
       *iter_ring_ = point.ring;
-      *iter_timestamp_ = point.timestamp;
+      *iter_time_ = static_cast<float>(point.timestamp - rs_msg.timestamp);
 
       ++iter_ring_;
-      ++iter_timestamp_;
+      ++iter_time_;
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
@@ -389,10 +393,10 @@ inline sensor_msgs::msg::PointCloud2 toRosMsg(const LidarPointCloudMsg& rs_msg, 
 
 #if defined(POINT_TYPE_XYZIRT) || defined(POINT_TYPE_XYZIRTF)
       *iter_ring_ = point.ring;
-      *iter_timestamp_ = point.timestamp;
+      *iter_time_ = static_cast<float>(point.timestamp - rs_msg.timestamp);
 
       ++iter_ring_;
-      ++iter_timestamp_;
+      ++iter_time_;
 #endif
 
 #if defined(POINT_TYPE_XYZIF) || defined(POINT_TYPE_XYZIRTF) 
