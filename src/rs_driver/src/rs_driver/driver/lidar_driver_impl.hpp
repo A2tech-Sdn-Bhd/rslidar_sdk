@@ -455,6 +455,15 @@ void LidarDriverImpl<T_PointCloud>::splitFrame(uint16_t height, double ts)
   std::shared_ptr<T_PointCloud> cloud = decoder_ptr_->point_cloud_;
   if (cloud->points.size() > 0)
   {
+    // With ts_first_point, the first frame after startup is split before any
+    // first-point timestamp exists (ts == 0). That partial frame would publish
+    // stamp 0 and absolute per-point times, which poisons FAST-LIO's scan-time
+    // estimate (it then waits ~30 min per scan). Drop it instead.
+    if (ts <= 0.0)
+    {
+      cloud->points.clear();
+      return;
+    }
     setPointCloudHeader(cloud, height, ts);
     cb_put_cloud_(cloud);
     decoder_ptr_->point_cloud_ = getPointCloud();
